@@ -1,0 +1,56 @@
+# ConfigMap for database initialization script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: microservices-demo
+  labels:
+    app: postgres
+data:
+  init.sql: |
+    -- Database initialization script
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      email VARCHAR(100) UNIQUE NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at DESC);
+
+    INSERT INTO users (name, email) VALUES
+      ('Alice Johnson', 'alice.johnson@example.com'),
+      ('Bob Smith', 'bob.smith@example.com'),
+      ('Charlie Brown', 'charlie.brown@example.com')
+    ON CONFLICT (email) DO NOTHING;
+
+    GRANT ALL PRIVILEGES ON TABLE users TO demouser;
+    GRANT USAGE, SELECT ON SEQUENCE users_id_seq TO demouser;
+
+---
+# ConfigMap for API service configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: microservices-demo
+  labels:
+    app: api
+data:
+  NODE_ENV: "production"
+  PORT: "8080"
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  DB_NAME: "demodb"
+---
+# ConfigMap for Frontend service configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: microservices-demo
+  labels:
+    app: frontend
+data:
+  REACT_APP_API_URL: "/api"
