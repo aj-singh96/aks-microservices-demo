@@ -1,0 +1,45 @@
+# SecretProviderClass for Azure Key Vault integration
+# Requires Azure Key Vault CSI driver to be installed in AKS
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: azure-keyvault-secrets
+  namespace: microservices-demo
+spec:
+  provider: azure
+  parameters:
+    usePodIdentity: "false"                      # Use system-assigned managed identity
+    useVMManagedIdentity: "true"                 # Use system-assigned managed identity
+    userAssignedIdentityID: ""                   # Optional: user-assigned identity client ID
+    keyvaultName: "your-keyvault-name"           # Replace with your Key Vault name
+    cloudName: "AzurePublicCloud"
+    objects: |
+      array:
+        - |
+          objectName: db-password
+          objectType: secret
+          objectVersion: ""
+        - |
+          objectName: db-username
+          objectType: secret
+          objectVersion: ""
+        - |
+          objectName: api-connection-string
+          objectType: secret
+          objectVersion: ""
+    tenantId: "your-tenant-id"                   # Replace with your Azure tenant ID
+secretObjects:
+- secretName: postgres-secret-akv
+  type: Opaque
+  data:
+    - objectName: db-password
+      key: POSTGRES_PASSWORD
+    - objectName: db-username
+      key: POSTGRES_USER
+- secretName: api-secret-akv
+  type: Opaque
+  data:
+    - objectName: db-password
+      key: DB_PASSWORD
+    - objectName: db-username
+      key: DB_USER
