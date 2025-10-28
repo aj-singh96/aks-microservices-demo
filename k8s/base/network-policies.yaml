@@ -1,0 +1,100 @@
+# NetworkPolicy for enhanced security
+# Restricts traffic between pods based on labels
+
+# Allow ingress traffic to frontend only from ingress controller
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-network-policy
+  namespace: microservices-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 80
+  egress:
+  - to:
+    podSelector:
+      matchLabels:
+        app: api
+    ports:
+    - protocol: TCP
+      port: 8080
+  - to: # Allow DNS
+    namespaceSelector:
+      matchLabels:
+        name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# Allow API to communicate with database
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-network-policy
+  namespace: microservices-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    podSelector:
+      matchLabels:
+        app: frontend
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  - to:
+    podSelector:
+      matchLabels:
+        app: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to: # Allow DNS
+    namespaceSelector:
+      matchLabels:
+        name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+
+
+---
+# Restrict database access to API only
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-network-policy
+  namespace: microservices-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    podSelector:
+      matchLabels:
+        app: api
+    ports:
+    - protocol: TCP
+      port: 5432
