@@ -1,0 +1,8 @@
+# Namespace for the microservices demo application
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: microservices-demo
+  labels:
+    name: microservices-demo
+    environment: production
